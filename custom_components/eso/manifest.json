@@ -1,0 +1,11 @@
+{
+  "domain": "eso",
+  "name": "ESO - integration",
+  "codeowners": ["@nyrkao"],
+  "dependencies": ["rest"],
+  "documentation": "",
+  "iot_class": "local_polling",
+  "issue_tracker":"",
+  "requirements": ["random_user_agent"],
+  "version": "v0.1"
+}
