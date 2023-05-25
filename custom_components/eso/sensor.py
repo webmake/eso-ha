@@ -7,16 +7,15 @@ from functools import partial
 
 from homeassistant.components.recorder.statistics import async_add_external_statistics
 from homeassistant.components.rest.data import RestData
-from homeassistant.components.sensor import (
-    PLATFORM_SCHEMA,
-)
+from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (
     CONF_NAME,
     CONF_PASSWORD,
     CONF_SELECTOR,
     CONF_USERNAME,
-    UnitOfEnergy
+    UnitOfEnergy,
 )
+from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
@@ -86,6 +85,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info 
         update_interval = SCAN_INTERVAL,
     )
 
+    coordinator.async_add_listener(lambda: async_add_entities([EsoSensorClass(coordinator)]))
     await coordinator.async_refresh()
 
     if not coordinator.last_update_success:
@@ -98,7 +98,7 @@ async def authAndGetToken(hass, username, password):
         'User-Agent': user_agent,
         'Referer': _ENDPOINT_AUTH,
         'Connection': 'keep-alive',
-        'X-Requested-With': 'XMLHttpRequest'
+        'X-Requested-With': 'XMLHttpRequest',
     }
 
     restInit = RestData(hass, METHOD_GET, _ENDPOINT_AUTH, DEFAULT_ENCODING, None, None, None, None, DEFAULT_VERIFY_SSL)
@@ -115,7 +115,7 @@ async def authAndGetToken(hass, username, password):
     login_data.update({
         'name': username,
         'pass': password,
-        'login_type': 1
+        'login_type': 1,
     })
     func = functools.partial(
         requests.post,
@@ -147,7 +147,7 @@ async def getRaw(hass, cookiesData, objectName):
         'Referer': _ENDPOINT_AUTH,
         'Accept-Language': 'en-US;q=0.9,en;q=0.8',
         'Connection': 'keep-alive',
-        'X-Requested-With': 'XMLHttpRequest'
+        'X-Requested-With': 'XMLHttpRequest',
     }
 
     func = functools.partial(
@@ -208,7 +208,7 @@ async def getRaw(hass, cookiesData, objectName):
         _LOGGER.error('Unable to get Raw data from ESO')
         return False
     else :
-        _LOGGER.debug('ESO Raw data fetched correctly ' + json.dumps(eso_consumption_history_form)[:100000] + ' ... ')
+        _LOGGER.debug('ESO Raw data fetched correctly ' + json.dumps(eso_consumption_history_form)[:1000] + ' ... ')
         for item in eso_consumption_history_form:
             statistics: list[StatisticData] = []
             label = item['label']
@@ -246,3 +246,14 @@ async def getRaw(hass, cookiesData, objectName):
             }
 
             async_add_external_statistics(hass, metadata, statistics)
+
+class EsoSensorClass(Entity):
+    def __init__(self, coordinator):
+        self._coordinator = coordinator
+
+    @property
+    def state(self):
+        data = self._coordinator.data
+        if data is None:
+            return None
+        return data.get('value')
