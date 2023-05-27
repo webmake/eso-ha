@@ -21,6 +21,7 @@ from homeassistant.helpers.update_coordinator import (
     UpdateFailed,
 )
 from homeassistant.util import dt as dt_util
+from homeassistant.util.ssl import SSLCipherList
 from random_user_agent.params import SoftwareName, OperatingSystem
 from random_user_agent.user_agent import UserAgent
 
@@ -101,7 +102,7 @@ async def authAndGetToken(hass, username, password):
         'X-Requested-With': 'XMLHttpRequest',
     }
 
-    restInit = RestData(hass, METHOD_GET, _ENDPOINT_AUTH, DEFAULT_ENCODING, None, None, None, None, DEFAULT_VERIFY_SSL)
+    restInit = RestData(hass, METHOD_GET, _ENDPOINT_AUTH, DEFAULT_ENCODING, None, None, None, None, DEFAULT_VERIFY_SSL, SSLCipherList.PYTHON_DEFAULT)
 
     await restInit.async_update()
 
